@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Employee Shuttles — DFW Hub Control</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="../../Style/site.css">
+  <link rel="stylesheet" href="tracker.css">
+  <script src="../../Scripts/navigation.js" defer></script>
+  <script src="../../Scripts/theme.js" defer></script>
+</head>
+<body class="tracker">
+  <header class="topbar hcc-header">
+    <div class="topbar-left">
+      <button class="hamburger-btn" aria-label="Toggle navigation">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+      <a href="../../av-ops.html" class="brand">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--hcc-blue-light);"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span>DFW Hub Control</span>
+        <span class="brand-badge">HCC-EDS</span>
+      </a>
+      <nav class="nav hcc-nav"></nav>
+    </div>
+    <div class="topbar-center">
+      <div class="global-search">
+        <input type="text" id="global-search-input" placeholder="Search operations or tools...">
+        <svg class="global-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <span class="global-search-shortcut">Ctrl+K</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="header-clock" title="Operational Zulu &amp; Local Time">
+        <span class="dot"></span>
+        <span class="zulu header-clock-zulu">--:--:-- Z</span>
+        <span class="local header-clock-local" style="color: #94A3B8;">--:--:-- Local</span>
+      </div>
+      <button type="button" class="theme-toggle" data-theme-toggle aria-label="Toggle dark/light mode">Dark mode</button>
+    </div>
+  </header>
+
+  <main class="shell hcc-main">
+    <div class="page-header">
+      <div class="page-header-info">
+        <span class="page-category">Operations / Shuttles</span>
+        <h1 class="page-title">Employee Shuttles</h1>
+        <p class="page-subtitle">Live employee lot shuttles, routes and stop arrivals.</p>
+      </div>
+      <div class="page-actions">
+        <a class="secondary-link" href="shuttles.html"><button type="button" class="secondary">All Shuttles →</button></a>
+      </div>
+    </div>
+
+    <section class="tracker-kpis" aria-label="Fleet summary">
+      <div class="kpi-item"><span class="kpi-label">Active Shuttles</span><span class="kpi-val" id="kpiActive">0</span></div>
+      <div class="kpi-item"><span class="kpi-label">Total Pax Load</span><span class="kpi-val" id="kpiLoad">0 / 0</span></div>
+      <div class="kpi-item"><span class="kpi-label">At Stop Now</span><span class="kpi-val" id="kpiAtStop">0</span></div>
+      <div class="kpi-item"><span class="kpi-label">Employee Stops</span><span class="kpi-val" id="kpiStops">0</span></div>
+    </section>
+
+    <div class="toolbar tracker-toolbar">
+      <div class="conn-status"><span class="live-dot" id="connDot"></span><span id="connStatus">Initializing...</span></div>
+      <div class="controls">
+        <label class="toggle-label"><input type="checkbox" id="togglePolylines" checked> Routes</label>
+        <label class="toggle-label"><input type="checkbox" id="toggleStops" checked> Stops</label>
+        <select id="mapStyleSelect" title="Switch map tile provider">
+          <option value="DARK_OSM">Map: Dark Street</option>
+          <option value="ESRI_SAT">Map: Airport Satellite</option>
+          <option value="ESRI_DARK">Map: Esri Dark Gray</option>
+          <option value="LIGHT_OSM">Map: Standard Street</option>
+        </select>
+        <select id="routeFilter" title="Filter by route"><option value="ALL">All Routes</option></select>
+        <button id="fitBoundsBtn" class="secondary">Fit Map</button>
+        <button id="rawJsonBtn" class="secondary">Raw JSON</button>
+        <button id="refreshBtn" class="primary">Refresh Now</button>
+      </div>
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-tabs">
+            <button class="tab-btn active" id="tabShuttles">Active Shuttles (<span id="tabShuttleCount">0</span>)</button>
+            <button class="tab-btn" id="tabStops">Stops &amp; Arrivals (<span id="tabStopCount">0</span>)</button>
+          </div>
+          <div class="route-legend" id="routeLegend"></div>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search Bus ID, route, stop...">
+        </div>
+        <div class="list-container" id="sidebarList"></div>
+      </aside>
+      <div id="map" class="map-dark-osm"></div>
+    </div>
+  </main>
+
+  <div class="json-modal" id="jsonModal">
+    <div class="json-box">
+      <div class="json-box-header">
+        <strong>API payloads (get_routes + get_stops + get_vehicles)</strong>
+        <button id="closeJsonBtn" class="secondary">Close</button>
+      </div>
+      <pre id="rawJsonPre"></pre>
+    </div>
+  </div>
+
+  <script>
+    window.TRACKER_CONFIG = {
+      apiBase: 'https://shuttletracker.dfwairport.mobi/v1/employee',
+      center: [32.8950, -97.0396],
+      dashedRouteIds: []
+    };
+  </script>
+  <script src="employee-snapshot.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="tracker.js"></script>
+</body>
+</html>
